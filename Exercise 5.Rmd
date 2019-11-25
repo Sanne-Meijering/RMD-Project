@@ -1,0 +1,78 @@
+---
+title: "The 95% confidence interval"
+author: "Sanne"
+date: "23/11/2019"
+output: html_document
+---
+
+```{r setup, echo=FALSE}
+# Load packages
+library(plotrix)
+library(knitr)
+
+# Set seed
+set.seed(465458)
+
+# Create empty vectors of length 100 for every statistic
+mean_samp <- rep(0,100)
+sd_samp <- rep(0,100)
+```
+
+```{r sample, echo = F}
+# Draw 100 samples of 100 values
+for(i in 1:100){
+  samp <- rnorm(100)
+  mean_samp[i] <- mean(samp) # Calculate mean of sample
+  sd_samp[i] <- sd(samp) # Calculate standard deviation of sample
+}
+```
+
+## Sample statistics
+
+For this explanation, 100 x 100 samples are drawn from a normal distribution with $\mu = 0$ and $\sigma = 1$. The sample mean $\overline{x}$ and sample standard deviation $s$ are calculated for each sample. 
+
+The **absolute bias** of the sample can be calculated using the formula $$\text{absolute bias} = abs(\overline{x} - \mu)$$.
+
+As $\mu = 0$ in this case, $- \mu$ is omitted from the equation.
+
+The **confidence interval** can calculated with $$CI = \overline{x} \pm z*SE$$ with $z = 1.96$ for the 95% confidence interval. $SE$ is the standard error, which is calculated using the formula 
+$$SE = \frac{s}{\sqrt{n}}$$, with $n$ being the sample size.
+
+
+```{r statistic, echo=FALSE}
+abs_bias <- abs(mean_samp) # Absolute bias
+SE <- sd_samp/sqrt(100) # Standard error
+low_conf <- mean_samp - 1.96*SE # Lower bound confidence interval
+high_conf <- mean_samp + 1.96*SE # Higher bound confidence interval
+```
+
+## The 95% confidence interval
+
+The 95% confidence interval gives the range between which the true mean will lie in at least 95% of the samples. As the plot below shows, this is also true for the current sample.
+
+```{r confint, echo=FALSE}
+# Plot sample means
+plot(mean_samp, ylim = c(-1,1), pch=16, ylab="Sample mean", xlab = "", xaxt = "n")
+# Add a horizontal line 
+abline(h=0, col="blue")
+# Add confidence intervals
+for(i in 1:100){
+  lines(x=c(i, i), y=c(low_conf[i], high_conf[i]))
+  if(low_conf[i] > 0 ||high_conf[i] < 0){
+    lines(x=c(i, i), y=c(low_conf[i], high_conf[i]), col="red")
+    points(i, mean_samp[i], pch=16, col="red")
+  }
+}
+```
+
+In this case, the confidence interval does not include the true mean in exactly 5 out of a 100 samples. For only a hundred samples, the exact number can vary due to chance. 
+
+## Table of samples that do not include the mean
+```{r table, echo=FALSE}
+low <- low_conf > 0 
+high <- high_conf < 0
+indexes <- which(as.logical(low + high))
+matrix_samp <- data.frame(mean_samp, sd_samp, low_conf, high_conf)
+kable(matrix_samp[indexes,], col.names = c("Mean", "Standard deviation", "95% CI Lower", "95% CI Upper"))
+```
+
